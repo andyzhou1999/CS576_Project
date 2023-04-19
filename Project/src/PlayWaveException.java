@@ -1,4 +1,4 @@
-package org.wikijava.sound.playWave;
+
 
 /**
  * @author Giulio

@@ -1,4 +1,4 @@
-package Ready_Player_One_rgb;
+package The_Great_Gatsby_rgb;
 
 import java.io.File;
 import java.io.IOException;
@@ -19,7 +19,7 @@ public class VideoPlayer {
         int width = 480; // width of the video frames
         int height = 270; // height of the video frames
         int fps = 30; // frames per second of the video
-        int numFrames = 8682; // number of frames in the video
+        int numFrames = 5686; // number of frames in the video
 
         // create the JFrame and JLabel to display the video
         JFrame frame = new JFrame("Video Display");

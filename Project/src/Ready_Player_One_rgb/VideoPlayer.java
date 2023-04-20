@@ -14,11 +14,11 @@ import java.awt.Color;
 import javax.swing.ImageIcon;
 
 public class VideoPlayer {
-    public static void main(String[] args) {
-        File file = new File("./InputVideo.rgb"); // name of the RGB video file
+    public static void playVideo(){
+        File file = new File("./src/Ready_Player_One_rgb/InputVideo.rgb"); // name of the RGB video file
         int width = 480; // width of the video frames
         int height = 270; // height of the video frames
-        int fps = 30; // frames per second of the video
+        double fps = 30; // frames per second of the video
         int numFrames = 8682; // number of frames in the video
 
         // create the JFrame and JLabel to display the video
@@ -53,7 +53,7 @@ public class VideoPlayer {
                 frame.validate();
                 frame.repaint();
                 try {
-                    Thread.sleep(1000 / fps);
+                    Thread.sleep((long) (1000 / fps));
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }

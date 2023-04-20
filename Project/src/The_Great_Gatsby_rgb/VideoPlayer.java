@@ -1,6 +1,7 @@
 package The_Great_Gatsby_rgb;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
@@ -14,11 +15,12 @@ import java.awt.Color;
 import javax.swing.ImageIcon;
 
 public class VideoPlayer {
-    public static void main(String[] args) {
-        File file = new File("./InputVideo.rgb"); // name of the RGB video file
+
+    public static void playVideo(){
+        File file = new File("./src/The_Great_Gatsby_rgb/InputVideo.rgb"); // name of the RGB video file
         int width = 480; // width of the video frames
         int height = 270; // height of the video frames
-        int fps = 30; // frames per second of the video
+        double fps = 34; // frames per second of the video
         int numFrames = 5686; // number of frames in the video
 
         // create the JFrame and JLabel to display the video
@@ -35,6 +37,8 @@ public class VideoPlayer {
             RandomAccessFile raf = new RandomAccessFile(file, "r");
             FileChannel channel = raf.getChannel();
             ByteBuffer buffer = ByteBuffer.allocate(width * height * 3);
+
+
             for (int i = 0; i < numFrames; i++) {
                 buffer.clear();
                 channel.read(buffer);
@@ -53,7 +57,7 @@ public class VideoPlayer {
                 frame.validate();
                 frame.repaint();
                 try {
-                    Thread.sleep(1000 / fps);
+                    Thread.sleep((long) (1000 / fps));
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }

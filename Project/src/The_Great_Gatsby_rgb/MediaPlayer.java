@@ -24,8 +24,9 @@ public class MediaPlayer {
         });
 
 
-        audio.start();
+
         video.start();
+        //audio.start();
 
     }
 }

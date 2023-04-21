@@ -1,4 +1,4 @@
-package The_Great_Gatsby_rgb;
+package The_Long_Dark_rgb;
 
 import javax.sound.sampled.*;
 import javax.sound.sampled.DataLine.Info;
@@ -25,7 +25,7 @@ public class PlaySound {
 
 	public PlaySound(){
 		try {
-			waveStream = new FileInputStream("/Users/andy117121/Desktop/CS576/CS576_Project/Project/src/The_Great_Gatsby_rgb/InputAudio.wav");
+			waveStream = new FileInputStream("/Users/andy117121/Desktop/CS576/CS576_Project/Project/src/The_Long_Dark_rgb/InputAudio.wav");
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		}

@@ -1,7 +1,5 @@
-package Ready_Player_One_rgb;
+package The_Long_Dark_rgb;
 
-
-import The_Long_Dark_rgb.PlayWaveException;
 
 public class MediaPlayer {
 
@@ -18,15 +16,18 @@ public class MediaPlayer {
             @Override
             public void run() {
                 PlaySound ps = new PlaySound();
-
-
-
+                try {
+                    ps.play();
+                } catch (PlayWaveException e) {
+                    e.printStackTrace();
+                }
             }
         });
 
 
-        audio.start();
+
         video.start();
+        //audio.start();
 
     }
 }

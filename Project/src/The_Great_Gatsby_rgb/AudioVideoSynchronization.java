@@ -1,14 +1,9 @@
 package The_Great_Gatsby_rgb;
 
-import org.bytedeco.javacv.*;
-import javax.sound.sampled.*;
-import java.io.*;
-import java.util.Arrays;
-
 public class AudioVideoSynchronization {
 
     public static void main(String[] args) throws Exception {
-        // Load the WAV file
+        /*// Load the WAV file
         File audioFile = new File("./src/The_Great_Gatsby_rgb/InputAudio.wav");
         AudioInputStream audioStream = AudioSystem.getAudioInputStream(audioFile);
         byte[] audioData = new byte[(int) audioFile.length()];
@@ -44,7 +39,7 @@ public class AudioVideoSynchronization {
 
         // Clean up resources
         videoFile.stop();
-        audioStream.close();
+        audioStream.close(); */
     }
 }
 

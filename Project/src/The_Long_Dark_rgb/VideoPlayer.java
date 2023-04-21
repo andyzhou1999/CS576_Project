@@ -1,21 +1,20 @@
 package The_Long_Dark_rgb;
 
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
-import java.awt.image.BufferedImage;
-import javax.imageio.ImageIO;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import java.awt.Dimension;
-import java.awt.Color;
-import javax.swing.ImageIcon;
 
 public class VideoPlayer {
-    public static void main(String[] args) {
-        File file = new File("./InputVideo.rgb"); // name of the RGB video file
+
+    public static void playVideo(){
+
+        File file = new File("/Users/andy117121/Desktop/CS576/CS576_Project/Project/src/The_Long_Dark_rgb/InputVideo.rgb"); // name of the RGB video file
         int width = 480; // width of the video frames
         int height = 270; // height of the video frames
         int fps = 30; // frames per second of the video
@@ -35,6 +34,132 @@ public class VideoPlayer {
             RandomAccessFile raf = new RandomAccessFile(file, "r");
             FileChannel channel = raf.getChannel();
             ByteBuffer buffer = ByteBuffer.allocate(width * height * 3);
+
+
+
+            //absolute difference
+            int[][] rgb1 = new int[height][width];
+            int[][] rgb2 = new int[height][width];
+            for (int i = 0; i < numFrames; i++){
+                buffer.clear();
+                channel.read(buffer);
+                buffer.rewind();
+
+
+
+                for (int y = 0; y < height; y++) {
+                    for (int x = 0; x < width; x++) {
+                        int r = buffer.get() & 0xff;
+                        int g = buffer.get() & 0xff;
+                        int b = buffer.get() & 0xff;
+                        int rgb = 0xff000000 |
+                                (r << 16) |
+                                (g << 8) |
+                                (b);
+
+                        if (i == 0){
+
+                            rgb1[y][x] = rgb;
+                        }
+                        else{
+
+                            rgb2[y][x] = rgb;
+                        }
+
+
+                    }
+                }
+
+                if (i != 0){
+
+                    double diff = 0;
+
+                    for (int y = 0; y < height; y++) {
+                        for (int x = 0; x < width; x++) {
+
+                            int r = Math.abs(((rgb2[y][x] - rgb1[y][x]) & 0x00ff0000) >> 16);
+                            int g = Math.abs(((rgb2[y][x] - rgb1[y][x]) & 0x0000ff00) >> 8);
+                            int b = Math.abs(((rgb2[y][x] - rgb1[y][x]) & 0xff));
+                            diff += Math.sqrt(r * r + g * g + b * b);
+                            rgb1[y][x] = rgb2[y][x];
+                            rgb2[y][x] = 0;
+                        }
+                    }
+
+                    //normalization
+                    diff /= 480 * 270;
+                    diff /= Math.sqrt(255 * 255 * 3);
+
+                    if (diff >= 0.62){
+
+                        System.out.println("Time Stamp: " + (i / 30 / 60) + " : " + (i / 30 - i / 30 / 60 * 60));
+                        System.out.println("Diff: " + diff);
+                    }
+
+                }
+            }
+
+
+
+            //histogram difference
+            /*double[][][] histogram1 = new double[256][256][256];
+            double[][][] histogram2 = new double[256][256][256];
+
+            for (int i = 0; i < numFrames; i++){
+                buffer.clear();
+                channel.read(buffer);
+                buffer.rewind();
+
+
+
+                for (int y = 0; y < height; y++) {
+                    for (int x = 0; x < width; x++) {
+                        int r = buffer.get() & 0xff;
+                        int g = buffer.get() & 0xff;
+                        int b = buffer.get() & 0xff;
+
+                        if (i == 0){
+
+                            histogram1[r][g][b] += 1;
+                        }
+                        else{
+
+                            histogram2[r][g][b] += 1;
+                        }
+
+
+                    }
+                }
+
+                if (i != 0){
+
+                    double diff = 0;
+
+                    for (int j = 0; j < histogram1.length; j++){
+
+                        for (int k = 0; k < histogram1[j].length; k++){
+
+                            for (int l = 0; l < histogram1[k].length; l++){
+
+                                diff += Math.abs(histogram2[j][k][l] - histogram1[j][k][l]);
+                                histogram1[j][k][l] = histogram2[j][k][l];
+                                histogram2[j][k][l] = 0;
+                            }
+                        }
+                    }
+
+                    //normalization
+                    diff /= 480 * 270;
+                    if (diff >= 0.8){
+
+                        System.out.println("Time Stamp: " + (i / 30 / 60) + " : " + (i / 30 - i / 30 / 60 * 60));
+                    }
+                }
+            } */
+
+
+
+
             for (int i = 0; i < numFrames; i++) {
                 buffer.clear();
                 channel.read(buffer);

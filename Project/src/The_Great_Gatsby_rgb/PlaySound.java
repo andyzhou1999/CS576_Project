@@ -13,9 +13,10 @@ import java.io.*;
 public class PlaySound {
 
     private InputStream waveStream;
-
-    private final int EXTERNAL_BUFFER_SIZE = 524288; // 128Kb
+	private static boolean isPaused = false;
+    private final int EXTERNAL_BUFFER_SIZE = 6000; // 128Kb
 	//private final int EXTERNAL_BUFFER_SIZE = 2000 * 2; //64kb
+	static SourceDataLine dataLine = null;
     /**
      * CONSTRUCTOR
      */
@@ -31,6 +32,10 @@ public class PlaySound {
 		}
 	}
 
+	public static void click(){
+
+		isPaused = !isPaused;
+	}
     public void play() throws PlayWaveException {
 
 	AudioInputStream audioInputStream = null;
@@ -52,7 +57,7 @@ public class PlaySound {
 	Info info = new Info(SourceDataLine.class, audioFormat);
 
 	// opens the audio channel
-	SourceDataLine dataLine = null;
+
 	try {
 
 	    dataLine = (SourceDataLine) AudioSystem.getLine(info);
@@ -71,11 +76,24 @@ public class PlaySound {
 
 	try {
 	    while (readBytes != -1) {
-		readBytes = audioInputStream.read(audioBuffer, 0,
-			audioBuffer.length);
-		if (readBytes >= 0){
-		    dataLine.write(audioBuffer, 0, readBytes);
-		}
+
+			if (!isPaused){
+				dataLine.start();
+				//if (dataLine.isActive()){
+					readBytes = audioInputStream.read(audioBuffer, 0,
+							audioBuffer.length);
+					if (readBytes >= 0){
+						dataLine.write(audioBuffer, 0, readBytes);
+					}
+				//}
+			}
+			else{
+
+				dataLine.stop();
+			}
+
+
+
 
 
 	    }

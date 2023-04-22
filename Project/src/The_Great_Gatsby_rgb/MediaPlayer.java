@@ -4,10 +4,11 @@ public class MediaPlayer {
 
     public static void main(String[] args){
 
+        VideoPlayer vp = new VideoPlayer();
         Thread video = new Thread(new Runnable() {
             @Override
             public void run() {
-                VideoPlayer.playVideo();
+                vp.playVideo();
             }
         });
 
@@ -26,7 +27,7 @@ public class MediaPlayer {
 
 
         video.start();
-        //audio.start();
+        audio.start();
 
     }
 }

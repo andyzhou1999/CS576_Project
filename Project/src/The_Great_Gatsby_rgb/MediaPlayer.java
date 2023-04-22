@@ -5,6 +5,7 @@ public class MediaPlayer {
     public static void main(String[] args){
 
         VideoPlayer vp = new VideoPlayer();
+        PlaySound ps = new PlaySound();
         Thread video = new Thread(new Runnable() {
             @Override
             public void run() {
@@ -15,7 +16,6 @@ public class MediaPlayer {
         Thread audio = new Thread(new Runnable() {
             @Override
             public void run() {
-                PlaySound ps = new PlaySound();
                 try {
                     ps.play();
                 } catch (PlayWaveException e) {

@@ -25,7 +25,7 @@ public class PlaySound {
 
 	public PlaySound(){
 		try {
-			waveStream = new FileInputStream("/Users/andy117121/Desktop/CS576/CS576_Project/Project/src/The_Great_Gatsby_rgb/InputAudio.wav");
+			waveStream = new FileInputStream("src/The_Great_Gatsby_rgb/InputAudio.wav");
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		}
@@ -71,7 +71,6 @@ public class PlaySound {
 
 	try {
 	    while (readBytes != -1) {
-	    	Thread.sleep(1200);
 		readBytes = audioInputStream.read(audioBuffer, 0,
 			audioBuffer.length);
 		if (readBytes >= 0){
@@ -80,8 +79,8 @@ public class PlaySound {
 
 
 	    }
-	} catch (IOException | InterruptedException e1) {
-	    throw new PlayWaveException(e1);
+	} catch (IOException e1) {
+		e1.printStackTrace();
 	} finally {
 	    // plays what's left and and closes the audioChannel
 	    dataLine.drain();

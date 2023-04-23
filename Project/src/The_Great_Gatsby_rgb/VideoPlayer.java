@@ -1,5 +1,6 @@
 package The_Great_Gatsby_rgb;
 
+
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -11,6 +12,8 @@ import java.nio.channels.FileChannel;
 import java.awt.image.BufferedImage;
 import javax.swing.*;
 import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.List;
 
 public class VideoPlayer {
     int width = 480;
@@ -22,6 +25,10 @@ public class VideoPlayer {
     JFrame frame = null;
     JLabel label= null;
     boolean isPaused = false;
+    List<Integer> timeStamps = new ArrayList<>();
+
+    //ptr for marking video starting frame
+    int location = 0;
 
     public VideoPlayer(){
         analyze();
@@ -38,7 +45,7 @@ public class VideoPlayer {
             //calculate transition
             double[][][] histogram1 = new double[256][256][256];
             double[][][] histogram2 = new double[256][256][256];
-
+            double prev = -1;
             for (int i = 0; i < numFrames; i++){
                 buffer.clear();
                 channel.read(buffer);
@@ -69,30 +76,48 @@ public class VideoPlayer {
 
                 frames[i] = image;
 
-//                if (i != 0){
-//
-//                    double diff = 0;
-//
-//                    for (int j = 0; j < histogram1.length; j++){
-//
-//                        for (int k = 0; k < histogram1[j].length; k++){
-//
-//                            for (int l = 0; l < histogram1[k].length; l++){
-//
-//                                diff += Math.abs(histogram2[j][k][l] - histogram1[j][k][l]);
-//                                histogram1[j][k][l] = histogram2[j][k][l];
-//                                histogram2[j][k][l] = 0;
-//                            }
-//                        }
-//                    }
-//
-//                    //normalization
-//                    diff /= 480 * 270;
-//                    if (diff >= 1.0){
-//
-//                        System.out.println("Time Stamp: " + (i / 30 / 60) + " : " + (i / 30 - i / 30 / 60 * 60));
-//                    }
-//                }
+                if (i != 0){
+
+                    double diff = 0;
+
+                    for (int j = 0; j < histogram1.length; j++){
+
+                        for (int k = 0; k < histogram1[j].length; k++){
+
+                            for (int l = 0; l < histogram1[k].length; l++){
+
+                                diff += Math.abs(histogram2[j][k][l] - histogram1[j][k][l]);
+                                histogram1[j][k][l] = histogram2[j][k][l];
+                                histogram2[j][k][l] = 0;
+                            }
+                        }
+                    }
+
+                    //normalization
+                    diff /= 480 * 270;
+                    if (diff >= 0.9){
+
+
+                        if (prev < 0){
+
+                            prev = i;
+                            timeStamps.add(i);
+                            System.out.println("Time Stamp: " + (i / 30 / 60) + " : " + (i / 30 - i / 30 / 60 * 60));
+                            System.out.println("Diff: " + diff);
+                        }
+                        else{
+
+                            //differs more than 70 frames
+                            if (i - prev > 90) {
+
+                                timeStamps.add(i);
+                                System.out.println("Time Stamp: " + (i / 30 / 60) + " : " + (i / 30 - i / 30 / 60 * 60));
+                                System.out.println("Diff: " + diff);
+                            }
+                            prev = i;
+                        }
+                    }
+                }
 
             }
 
@@ -103,6 +128,9 @@ public class VideoPlayer {
             label = new JLabel();
             label.setPreferredSize(new Dimension(width, height));
             frame.add(label);
+
+
+            // control panel
             JPanel control = new JPanel();
             JButton play = new JButton("Pause");
             play.addActionListener(new ActionListener() {
@@ -125,6 +153,43 @@ public class VideoPlayer {
             });
             control.add(play);
             frame.add(control, BorderLayout.SOUTH);
+
+            //timestamps
+            JPanel stamps = new JPanel();
+
+            for (int i = 0; i < timeStamps.size(); i++){
+
+                JButton stamp = new JButton("Frame " + timeStamps.get(i));
+                //add event listener for clicking time stamp, so video and audio will be set to correct location
+                int finalI = i;
+                stamp.addActionListener(new ActionListener() {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+
+                        //1. pause video if not paused already
+                        if (!isPaused){
+                            play.doClick();
+                        }
+
+                        //2. set video to correct frame
+                        label.setIcon(new ImageIcon(frames[timeStamps.get(finalI)]));
+                        frame.validate();
+                        frame.repaint();
+                        location = timeStamps.get(finalI);
+
+                        //3. set audio to correct bytes
+                        int time = (int) (timeStamps.get(finalI) / ((double)(numFrames)) * PlaySound.length);
+                        PlaySound.setFrame(time);
+
+                    }
+                });
+
+                stamps.add(stamp);
+            }
+
+            frame.add(stamps, BorderLayout.NORTH);
+
+
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -133,13 +198,13 @@ public class VideoPlayer {
 
 
     public void playVideo(){
-        for (int i = 0; i < numFrames;){
+        for (;location < numFrames;){
 
             if (!isPaused){
-                label.setIcon(new ImageIcon(frames[i]));
+                label.setIcon(new ImageIcon(frames[location]));
                 frame.validate();
                 frame.repaint();
-                i++;
+                location++;
             }
             else{
 

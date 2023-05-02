@@ -14,6 +14,10 @@ import javax.swing.*;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
+import org.opencv.core.Core;
+import org.opencv.core.Mat;
+import org.opencv.core.MatOfDouble;
+import org.opencv.imgcodecs.Imgcodecs;
 
 public class VideoPlayer {
     int width = 480;
@@ -36,12 +40,13 @@ public class VideoPlayer {
 
     public VideoPlayer(){
         analyze();
+        //calculateTone();
     }
 
     public void analyze(){
 
         try {
-            File file = new File("src/The_Great_Gatsby_rgb/InputVideo.rgb");
+            File file = new File("Project/src/The_Great_Gatsby_rgb/InputVideo.rgb");
             RandomAccessFile raf = new RandomAccessFile(file, "r");
             FileChannel channel = raf.getChannel();
             ByteBuffer buffer = ByteBuffer.allocate(width * height * 3);
@@ -256,5 +261,62 @@ public class VideoPlayer {
             }
         }
 
+    }
+
+    public void calculateTone(){
+        double shot_average[][] = new double[timeStamps.size()][3];
+        for(int i =0;i<timeStamps.size();i++){
+            int start_frame=0;
+            if(i==0){
+                start_frame=0;
+            }
+            else{
+                start_frame = timeStamps.get(i-1)+1;
+            }
+            int redSum = 0;
+            int greenSum = 0;
+            int blueSum = 0;
+            int totalCount = 0;
+
+            for(int j=start_frame; j<=timeStamps.get(i);j++){ //loop for each shot
+                BufferedImage image = frames[j];
+
+
+                // Iterate over each pixel in the image
+                for (int y = 0; y < height; y++) {
+                    for (int x = 0; x < width; x++) {
+                        // Get the color of the pixel
+                        Color color = new Color(image.getRGB(x, y));
+
+                        // Add the color components to the sums
+                        redSum += color.getRed();
+                        greenSum += color.getGreen();
+                        blueSum += color.getBlue();
+
+                        // Increment the total count
+                        totalCount++;
+                    }
+                }
+
+            }
+            // Compute the average color tone
+            shot_average[i][0] = redSum / (double) totalCount;
+            shot_average[i][1] = greenSum / (double) totalCount;
+            shot_average[i][2] = blueSum / (double) totalCount;
+            System.out.println(i+"'s shot with average tone of " + shot_average[i][0] + " " +shot_average[i][1] + " "+shot_average[i][2]);
+
+        }
+
+        for(int i = 0;i<timeStamps.size()-1;i++){
+            double r1 = shot_average[i][0];
+            double g1 = shot_average[i][1];
+            double b1 = shot_average[i][2];
+
+            double r2 = shot_average[i+1][0];
+            double g2 = shot_average[i+1][1];
+            double b2 = shot_average[i+1][2];
+            double distance = Math.sqrt(Math.pow(r1 - r2, 2) + Math.pow(g1 - g2, 2) + Math.pow(b1 - b2, 2));
+            System.out.println("average betweenb " + i + " and " + (i+1) + " is " + distance);
+        }
     }
 }

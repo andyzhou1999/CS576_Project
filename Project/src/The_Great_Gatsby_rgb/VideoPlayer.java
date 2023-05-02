@@ -30,6 +30,10 @@ public class VideoPlayer {
     //ptr for marking video starting frame
     int location = 0;
 
+    double sceneDiff = 1.2;
+    double shotDiff = 0.92;
+    double subshotDiff = 0.85;
+
     public VideoPlayer(){
         analyze();
     }
@@ -42,6 +46,7 @@ public class VideoPlayer {
             FileChannel channel = raf.getChannel();
             ByteBuffer buffer = ByteBuffer.allocate(width * height * 3);
 
+            System.out.println("Frames: " + channel.size() / (width * height * 3));
             //calculate transition
             double[][][] histogram1 = new double[256][256][256];
             double[][][] histogram2 = new double[256][256][256];
@@ -95,13 +100,14 @@ public class VideoPlayer {
 
                     //normalization
                     diff /= 480 * 270;
-                    if (diff >= 0.9){
+                    if (diff >= sceneDiff){
 
 
                         if (prev < 0){
 
                             prev = i;
                             timeStamps.add(i);
+                            System.out.println("Scene");
                             System.out.println("Time Stamp: " + (i / 30 / 60) + " : " + (i / 30 - i / 30 / 60 * 60));
                             System.out.println("Diff: " + diff);
                         }
@@ -110,6 +116,7 @@ public class VideoPlayer {
                             //differs more than 70 frames
                             if (i - prev > 90) {
 
+                                System.out.println("Scene");
                                 timeStamps.add(i);
                                 System.out.println("Time Stamp: " + (i / 30 / 60) + " : " + (i / 30 - i / 30 / 60 * 60));
                                 System.out.println("Diff: " + diff);
@@ -117,22 +124,38 @@ public class VideoPlayer {
                             prev = i;
                         }
                     }
+                    else if (diff >= shotDiff){
+
+                        System.out.println("Shot");
+                        System.out.println("Time Stamp: " + (i / 30 / 60) + " : " + (i / 30 - i / 30 / 60 * 60));
+                        System.out.println("Diff: " + diff);
+                    }
+                    else if (diff >= subshotDiff){
+
+                        System.out.println("Sub-Shot");
+                        System.out.println("Time Stamp: " + (i / 30 / 60) + " : " + (i / 30 - i / 30 / 60 * 60));
+                        System.out.println("Diff: " + diff);
+                    }
                 }
 
             }
 
+            //video play gui
             frame = new JFrame("Video Display");
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frame.setSize(new Dimension(width, height + 200));
-            frame.setVisible(true);
+            frame.setSize(new Dimension(800, 600));
+
+            JPanel video = new JPanel();
+            JPanel scroll = new JPanel();
             label = new JLabel();
             label.setPreferredSize(new Dimension(width, height));
-            frame.add(label);
-
+            video.add(label);
 
             // control panel
             JPanel control = new JPanel();
+            control.setSize(new Dimension(width, 100));
             JButton play = new JButton("Pause");
+            play.setSize(50, 20);
             play.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
@@ -141,21 +164,30 @@ public class VideoPlayer {
                     PlaySound.click();
                     // pause/start video
                     isPaused = !isPaused;
-                    if (play.getText().equals("Play")){
+                    if (play.getText().equals("Play ")){
 
                         play.setText("Pause");
+                        play.setSize(50, 20);
+
                     }
                     else{
 
-                        play.setText("Play");
+                        play.setText("Play ");
+                        play.setSize(50, 20);
                     }
                 }
             });
             control.add(play);
             frame.add(control, BorderLayout.SOUTH);
 
+            frame.add(video, BorderLayout.EAST);
+
             //timestamps
-            JPanel stamps = new JPanel();
+
+            scroll.setSize(width, height + 150);
+            JScrollPane scrollPane = new JScrollPane(scroll, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+            scroll.setLayout(new BoxLayout(scroll, BoxLayout.Y_AXIS));
+            scrollPane.setWheelScrollingEnabled(true);
 
             for (int i = 0; i < timeStamps.size(); i++){
 
@@ -177,6 +209,7 @@ public class VideoPlayer {
                         frame.repaint();
                         location = timeStamps.get(finalI);
 
+
                         //3. set audio to correct bytes
                         int time = (int) (timeStamps.get(finalI) / ((double)(numFrames)) * PlaySound.length);
                         PlaySound.setFrame(time);
@@ -184,23 +217,27 @@ public class VideoPlayer {
                     }
                 });
 
-                stamps.add(stamp);
+                scroll.add(stamp);
             }
 
-            frame.add(stamps, BorderLayout.NORTH);
 
+            frame.add(scrollPane, BorderLayout.WEST);
+            frame.validate();
+            frame.setVisible(true);
 
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+
     }
 
 
 
     public void playVideo(){
-        for (;location < numFrames;){
+        for (;location < numFrames + 1;){
 
-            if (!isPaused){
+            if (!isPaused && location < numFrames){
                 label.setIcon(new ImageIcon(frames[location]));
                 frame.validate();
                 frame.repaint();

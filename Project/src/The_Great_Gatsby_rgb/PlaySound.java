@@ -15,7 +15,7 @@ import java.util.List;
 public class PlaySound {
 
     private InputStream waveStream;
-	private static boolean isPaused = false;
+	static boolean isPaused = false;
     private final int EXTERNAL_BUFFER_SIZE = 6000; // 128Kb
 	//private final int EXTERNAL_BUFFER_SIZE = 2000 * 2; //64kb
 	static SourceDataLine dataLine = null;
@@ -34,14 +34,13 @@ public class PlaySound {
 	}
 
 	public PlaySound(List<Integer> timeStamps, int frames) {
-		analyze(timeStamps, frames);
+		//analyze(timeStamps, frames);
 	}
 
 	public void analyze(List<Integer> timeStamps, int frames){
 		//add the 0 frame, and numFrame
 
 		timeStamps.add(0,0);
-		timeStamps.add(frames);
 		System.out.println(timeStamps);
 		File audioFile = new File("Project/src/The_Great_Gatsby_rgb/InputAudio.wav");
 		try {
@@ -131,7 +130,6 @@ public class PlaySound {
 		isPaused = !isPaused;
 
 		if (isPaused){
-
 
 			clip.stop();
 		}

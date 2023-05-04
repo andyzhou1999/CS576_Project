@@ -2,6 +2,7 @@ package The_Great_Gatsby_rgb;
 
 
 import java.awt.*;
+import java.awt.color.ColorSpace;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -11,13 +12,8 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.awt.image.BufferedImage;
 import javax.swing.*;
-import java.nio.file.Files;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
-import org.opencv.core.Core;
-import org.opencv.core.Mat;
-import org.opencv.core.MatOfDouble;
-import org.opencv.imgcodecs.Imgcodecs;
 
 public class VideoPlayer {
     int width = 480;
@@ -25,18 +21,22 @@ public class VideoPlayer {
     double fps = 30;
     int numFrames = 5686;
     //BufferedImage image;
-    BufferedImage[] frames = new BufferedImage[numFrames];
+    BufferedImage[] frames;
     JFrame frame = null;
     JLabel label= null;
     boolean isPaused = false;
+    boolean isStopped = false;
     List<Integer> timeStamps = new ArrayList<>();
+    List<Double> timeStampsDiff = new ArrayList<>();
+
+    JButton lastClicked = null;
+    Map<Integer, JButton> buttons = new HashMap<>();
 
     //ptr for marking video starting frame
     int location = 0;
 
-    double sceneDiff = 1.2;
-    double shotDiff = 0.92;
-    double subshotDiff = 0.85;
+    double threshold = 0.75;
+
 
     public VideoPlayer(){
         analyze();
@@ -51,6 +51,8 @@ public class VideoPlayer {
             FileChannel channel = raf.getChannel();
             ByteBuffer buffer = ByteBuffer.allocate(width * height * 3);
 
+            numFrames = (int) (channel.size() / (width * height * 3));
+            frames = new BufferedImage[numFrames];
             System.out.println("Frames: " + channel.size() / (width * height * 3));
             //calculate transition
             double[][][] histogram1 = new double[256][256][256];
@@ -105,7 +107,7 @@ public class VideoPlayer {
 
                     //normalization
                     diff /= 480 * 270;
-                    if (diff >= sceneDiff){
+                    if (diff >= threshold){
 
 
                         if (prev < 0){
@@ -113,33 +115,27 @@ public class VideoPlayer {
                             prev = i;
                             timeStamps.add(i);
                             System.out.println("Scene");
+                            System.out.println("Frame: " + i);
                             System.out.println("Time Stamp: " + (i / 30 / 60) + " : " + (i / 30 - i / 30 / 60 * 60));
                             System.out.println("Diff: " + diff);
+
+                            timeStampsDiff.add(diff);
                         }
                         else{
 
-                            //differs more than 70 frames
-                            if (i - prev > 90) {
+                            //differs more than 80 frames
+                            if (i - prev > 80) {
 
                                 System.out.println("Scene");
                                 timeStamps.add(i);
+                                System.out.println("Frame: " + i);
                                 System.out.println("Time Stamp: " + (i / 30 / 60) + " : " + (i / 30 - i / 30 / 60 * 60));
                                 System.out.println("Diff: " + diff);
+
+                                timeStampsDiff.add(diff);
                             }
                             prev = i;
                         }
-                    }
-                    else if (diff >= shotDiff){
-
-                        System.out.println("Shot");
-                        System.out.println("Time Stamp: " + (i / 30 / 60) + " : " + (i / 30 - i / 30 / 60 * 60));
-                        System.out.println("Diff: " + diff);
-                    }
-                    else if (diff >= subshotDiff){
-
-                        System.out.println("Sub-Shot");
-                        System.out.println("Time Stamp: " + (i / 30 / 60) + " : " + (i / 30 - i / 30 / 60 * 60));
-                        System.out.println("Diff: " + diff);
                     }
                 }
 
@@ -159,30 +155,65 @@ public class VideoPlayer {
             // control panel
             JPanel control = new JPanel();
             control.setSize(new Dimension(width, 100));
-            JButton play = new JButton("Pause");
-            play.setSize(50, 20);
-            play.addActionListener(new ActionListener() {
+            JButton pause = new JButton("Pause");
+            pause.setSize(50, 20);
+            pause.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
 
                     // pause/start audio
-                    PlaySound.click();
-                    // pause/start video
-                    isPaused = !isPaused;
-                    if (play.getText().equals("Play ")){
+                    if (!isPaused && !isStopped){
 
-                        play.setText("Pause");
-                        play.setSize(50, 20);
-
-                    }
-                    else{
-
-                        play.setText("Play ");
-                        play.setSize(50, 20);
+                        PlaySound.click();
+                        isPaused = true;
                     }
                 }
             });
+
+
+            JButton play = new JButton("Play");
+            play.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+
+
+                    if (isPaused){
+
+                        isPaused = false;
+                        PlaySound.click();
+                    }
+                    else if (isStopped){
+
+                        //reset to start point
+                        location = 0;
+                        PlaySound.setFrame(0);
+
+                        //repaint frame to frame 0
+                        label.setIcon(new ImageIcon(frames[timeStamps.get(0)]));
+                        frame.validate();
+                        frame.repaint();
+
+                        //start sound and video
+                        isStopped = false;
+                        isPaused = false;
+                        PlaySound.clip.start();
+
+                    }
+                }
+            });
+
+            JButton stop = new JButton("Stop");
+            stop.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+
+                    //go back to the beginning of the segment
+                    lastClicked.doClick();
+                }
+            });
             control.add(play);
+            control.add(pause);
+            control.add(stop);
             frame.add(control, BorderLayout.SOUTH);
 
             frame.add(video, BorderLayout.EAST);
@@ -194,19 +225,68 @@ public class VideoPlayer {
             scroll.setLayout(new BoxLayout(scroll, BoxLayout.Y_AXIS));
             scrollPane.setWheelScrollingEnabled(true);
 
+            timeStampsDiff.add(0, 0.0);
+            List<Double> copy = new ArrayList<>(timeStampsDiff);
+            Collections.sort(copy);
+            timeStamps.add(0, 0);
+
+            double sceneDiff = 0, shotDiff = 0;
+
+            if (timeStamps.size() <= 16){
+
+                sceneDiff = copy.get((int) (Math.ceil(0.65 * copy.size()) - 1));
+                shotDiff = copy.get((int) (Math.ceil(0.30 * copy.size()) - 1));
+            }
+            else{
+                sceneDiff = copy.get((int) (Math.ceil(0.75 * copy.size()) - 1));
+                shotDiff = copy.get((int) (Math.ceil(0.25 * copy.size()) - 1));
+            }
+
+
+            System.out.println("Scene cut-off: " + sceneDiff);
+            System.out.println("Shot cut-off: " + shotDiff);
+            int currScene = 0, currShot = 0, currSubShot = 0;
             for (int i = 0; i < timeStamps.size(); i++){
+
+
+                if (i == 0 || timeStampsDiff.get(i) >= sceneDiff){
+
+                    JLabel scene = new JLabel("Scene " + ++currScene);
+                    scroll.add(scene);
+                    JLabel shot = new JLabel("Shot 1" );
+                    scroll.add(shot);
+                    currShot = 1;
+                    currSubShot = 0;
+                }
+                else if (timeStampsDiff.get(i) >= shotDiff){
+
+                    JLabel shot = new JLabel("Shot " + ++currShot);
+                    scroll.add(shot);
+                    currSubShot = 0;
+
+                }
+                else{
+
+                    JLabel subShot = new JLabel("Subshot " + ++currSubShot);
+                    scroll.add(subShot);
+                }
+
+
+
 
                 JButton stamp = new JButton("Frame " + timeStamps.get(i));
                 //add event listener for clicking time stamp, so video and audio will be set to correct location
                 int finalI = i;
+
+                buttons.put(timeStamps.get(i), stamp);
+                stamp.setBackground(new Color(255, 255,255));
+                stamp.setForeground(new Color(0, 0, 0));
                 stamp.addActionListener(new ActionListener() {
                     @Override
                     public void actionPerformed(ActionEvent e) {
 
                         //1. pause video if not paused already
-                        if (!isPaused){
-                            play.doClick();
-                        }
+                        pause.doClick();
 
                         //2. set video to correct frame
                         label.setIcon(new ImageIcon(frames[timeStamps.get(finalI)]));
@@ -219,8 +299,25 @@ public class VideoPlayer {
                         int time = (int) (timeStamps.get(finalI) / ((double)(numFrames)) * PlaySound.length);
                         PlaySound.setFrame(time);
 
+                        if (lastClicked != null){
+
+                            lastClicked.setBackground(new Color(255, 255,255));
+                            lastClicked.setForeground(new Color(0, 0, 0));
+                        }
+
+                        stamp.setBackground(new Color(0, 0, 0));
+                        stamp.setForeground(new Color(255, 255,255));
+
+
+
+                        lastClicked = stamp;
+
                     }
                 });
+
+
+
+
 
                 scroll.add(stamp);
             }
@@ -229,6 +326,9 @@ public class VideoPlayer {
             frame.add(scrollPane, BorderLayout.WEST);
             frame.validate();
             frame.setVisible(true);
+
+            //update the status
+
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -242,7 +342,27 @@ public class VideoPlayer {
     public void playVideo(){
         for (;location < numFrames + 1;){
 
-            if (!isPaused && location < numFrames){
+
+            if (!isPaused && !isStopped && location < numFrames){
+
+
+
+
+
+                if (buttons.containsKey(location)){
+
+                    if (lastClicked != null){
+
+                        lastClicked.setBackground(new Color(255, 255,255));
+                        lastClicked.setForeground(new Color(0,0,0));
+                    }
+
+                    lastClicked = buttons.get(location);
+                    lastClicked.setForeground(new Color(255, 255, 255));
+                    lastClicked.setBackground(new Color(0,0,0));
+                }
+
+
                 label.setIcon(new ImageIcon(frames[location]));
                 frame.validate();
                 frame.repaint();
@@ -261,62 +381,5 @@ public class VideoPlayer {
             }
         }
 
-    }
-
-    public void calculateTone(){
-        double shot_average[][] = new double[timeStamps.size()][3];
-        for(int i =0;i<timeStamps.size();i++){
-            int start_frame=0;
-            if(i==0){
-                start_frame=0;
-            }
-            else{
-                start_frame = timeStamps.get(i-1)+1;
-            }
-            int redSum = 0;
-            int greenSum = 0;
-            int blueSum = 0;
-            int totalCount = 0;
-
-            for(int j=start_frame; j<=timeStamps.get(i);j++){ //loop for each shot
-                BufferedImage image = frames[j];
-
-
-                // Iterate over each pixel in the image
-                for (int y = 0; y < height; y++) {
-                    for (int x = 0; x < width; x++) {
-                        // Get the color of the pixel
-                        Color color = new Color(image.getRGB(x, y));
-
-                        // Add the color components to the sums
-                        redSum += color.getRed();
-                        greenSum += color.getGreen();
-                        blueSum += color.getBlue();
-
-                        // Increment the total count
-                        totalCount++;
-                    }
-                }
-
-            }
-            // Compute the average color tone
-            shot_average[i][0] = redSum / (double) totalCount;
-            shot_average[i][1] = greenSum / (double) totalCount;
-            shot_average[i][2] = blueSum / (double) totalCount;
-            System.out.println(i+"'s shot with average tone of " + shot_average[i][0] + " " +shot_average[i][1] + " "+shot_average[i][2]);
-
-        }
-
-        for(int i = 0;i<timeStamps.size()-1;i++){
-            double r1 = shot_average[i][0];
-            double g1 = shot_average[i][1];
-            double b1 = shot_average[i][2];
-
-            double r2 = shot_average[i+1][0];
-            double g2 = shot_average[i+1][1];
-            double b2 = shot_average[i+1][2];
-            double distance = Math.sqrt(Math.pow(r1 - r2, 2) + Math.pow(g1 - g2, 2) + Math.pow(b1 - b2, 2));
-            System.out.println("average betweenb " + i + " and " + (i+1) + " is " + distance);
-        }
     }
 }

@@ -5,11 +5,8 @@ public class MediaPlayer {
     public static void main(String[] args){
 
         VideoPlayer vp = new VideoPlayer();
-        PlaySound ps = new PlaySound(vp.timeStamps,vp.numFrames);
+        PlaySound ps = new PlaySound();
 
-        for (int i = 0; i < vp.timeStamps.size(); i++) {
-            System.out.print(vp.timeStamps.get(i) + " ");
-        }
 
         Thread video = new Thread(new Runnable() {
             @Override

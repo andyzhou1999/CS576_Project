@@ -24,6 +24,8 @@ public class PlaySound {
 	static long frame = 0;
 	static int length = 0;
 
+	static String wav;
+
 	int threshold = 60;
     /**
      * CONSTRUCTOR
@@ -37,12 +39,17 @@ public class PlaySound {
 		//analyze(timeStamps, frames);
 	}
 
+	public PlaySound(String wav) {
+
+		PlaySound.wav = wav;
+	}
+
 	public void analyze(List<Integer> timeStamps, int frames){
 		//add the 0 frame, and numFrame
 
 		timeStamps.add(0,0);
 		System.out.println(timeStamps);
-		File audioFile = new File("Project/src/The_Great_Gatsby_rgb/InputAudio.wav");
+		File audioFile = new File(wav);
 		try {
 			AudioInputStream audioStream = AudioSystem.getAudioInputStream(audioFile);
 			int numChannels = audioStream.getFormat().getChannels();
@@ -110,7 +117,7 @@ public class PlaySound {
 		clip.stop();
 		clip.close();
 		try {
-			audioInputStream = AudioSystem.getAudioInputStream(new File("Project/src/The_Great_Gatsby_rgb/InputAudio.wav"));
+			audioInputStream = AudioSystem.getAudioInputStream(new File(wav));
 			clip.open(audioInputStream);
 			clip.setFramePosition(frame);
 			clip.getFramePosition();
@@ -141,7 +148,7 @@ public class PlaySound {
     public void play(){
 
 		try {
-			audioInputStream = AudioSystem.getAudioInputStream(new File("Project/src/The_Great_Gatsby_rgb/InputAudio.wav"));
+			audioInputStream = AudioSystem.getAudioInputStream(new File(wav));
 			clip = AudioSystem.getClip();
 			clip.open(audioInputStream);
 

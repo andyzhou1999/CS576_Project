@@ -2,7 +2,6 @@ package The_Great_Gatsby_rgb;
 
 
 import java.awt.*;
-import java.awt.color.ColorSpace;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -37,8 +36,12 @@ public class VideoPlayer {
 
     double threshold = 0.75;
 
+    String rgb;
 
-    public VideoPlayer(){
+
+    public VideoPlayer(String rgb){
+
+        this.rgb = rgb;
         analyze();
         //calculateTone();
     }
@@ -46,7 +49,7 @@ public class VideoPlayer {
     public void analyze(){
 
         try {
-            File file = new File("Project/src/The_Great_Gatsby_rgb/InputVideo.rgb");
+            File file = new File(rgb);
             RandomAccessFile raf = new RandomAccessFile(file, "r");
             FileChannel channel = raf.getChannel();
             ByteBuffer buffer = ByteBuffer.allocate(width * height * 3);
@@ -124,7 +127,7 @@ public class VideoPlayer {
                         else{
 
                             //differs more than 80 frames
-                            if (i - prev > 80) {
+                            if (i - prev > 60) {
 
                                 System.out.println("Scene");
                                 timeStamps.add(i);
@@ -133,8 +136,9 @@ public class VideoPlayer {
                                 System.out.println("Diff: " + diff);
 
                                 timeStampsDiff.add(diff);
+                                prev = i;
                             }
-                            prev = i;
+
                         }
                     }
                 }

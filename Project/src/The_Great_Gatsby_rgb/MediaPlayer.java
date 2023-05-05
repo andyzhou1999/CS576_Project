@@ -4,8 +4,10 @@ public class MediaPlayer {
 
     public static void main(String[] args){
 
-        VideoPlayer vp = new VideoPlayer();
-        PlaySound ps = new PlaySound();
+        String rgb = args[0];
+        String wav = args[1];
+        VideoPlayer vp = new VideoPlayer(rgb);
+        PlaySound ps = new PlaySound(wav);
 
 
         Thread video = new Thread(new Runnable() {
